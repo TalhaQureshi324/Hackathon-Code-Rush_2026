@@ -19,7 +19,7 @@ import os
 import numpy as np
 import pandas as pd
 from catboost import CatBoostClassifier
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.metrics import f1_score, classification_report
 import xgboost as xgb
 
@@ -261,12 +261,13 @@ sample_wts = np.array([class_weights[int(v)] for v in y])
 # 6. 5-FOLD OOF + THRESHOLD TUNING
 # =============================================================================
 print("\n5-Fold OOF training + threshold search...")
-SKF = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
+groups = train_bags["bag_id"].values
+SKF = StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=SEED)
 
 oof_xgb = np.zeros((len(X), 3))
 oof_cbt = np.zeros((len(X), 3))
 
-for fold, (tr_idx, val_idx) in enumerate(SKF.split(X, y)):
+for fold, (tr_idx, val_idx) in enumerate(SKF.split(X, y, groups=groups)):
     print(f"  Fold {fold+1}...", end=" ")
     Xtr, Xval = X[tr_idx], X[val_idx]
     ytr, yval = y[tr_idx], y[val_idx]
